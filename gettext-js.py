@@ -128,6 +128,9 @@ def gettext( filename ):
                     if instring:
                         if c == instring and not js[ p-1 ] == '\\':
                             instring = False
+                        elif c == instring and js[ p-1 ] == '\\':
+                            if not locked:
+                                strings[-1] = strings[-1][:-1] + c
                         else:
                             if not locked:
                                 strings[-1] = strings[-1] + c
