@@ -5,7 +5,7 @@ import os
 #
 # gettext-js - a hack to get translation strings from JavaScript files
 # 
-# Copyright (C) 2011 Borgar Þorsteinsson
+# Copyright (C) 2011 Borgar Thorsteinsson
 # Licensed under the terms of the MIT software license.
 #
 # This is a naiive hack to produce gettext compatible files from JavaScript.
@@ -40,17 +40,18 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\\n"
 """
 
-# TODO: pick these up from command line and add to the regexp runtime. 
+# TODO: pick these up from command line and add to the regexp runtime.
+# TODO: we need to be able to add a number to these specifying how many strings they are allowed to pick up.
 # patterns = [ '_', 'getText', 'ngetText' ]
 
 re_str = re.compile(r"""
         (?:
           (?P<string_double>
-            "(?: \\" | [^"\n]+ )*"
+            "[^\n]*?(?<!\\)"
           )
           |
           (?P<string_single>
-            '(?: \\' | [^'\n]+ )*'
+            '[^\n]*?(?<!\\)'
           )
           |
           (?P<comment_block>
@@ -62,7 +63,7 @@ re_str = re.compile(r"""
           )
           |
           (?P<regexp>
-             (?<![\w$])
+             (?<![\w$\)\]<>])
              / (?: \\/ | [^\n/] )+ /
              (?!/)[gim]*
           )
@@ -156,13 +157,12 @@ def gettext( filename ):
                     p += 1
                     if p > chunk.end() + 200:
                         # FIXME: we should really issue a warning here
-                        raise Exception('crash: %s' % linenr)
+                        raise Exception( 'Parse error in line %s' % linenr )
                         # raise SyntaxError('Something has done wrong in %s line %s', (filename, linenr))
-                        p = chunk.end() # this is really a bad way to be robust
-                        break                    
+                        #p = chunk.end() # this is really a bad way to be robust
+                        #break                    
 
                 for string in strings:
-                    #print chunk.start(), linenr, string
                     if string in matches:
                         md = matches[ string ]
                         md['lines'].append( linenr )
@@ -193,9 +193,9 @@ def gettext( filename ):
         # fixme: deal with flags: ", javascript-format"
         e = esc(msgid)
         if len( e ) < 75:
-            out.append( "msgid: \"%s\"" % e )
+            out.append( "msgid \"%s\"" % e )
         else:
-            out.append( "msgid: \"\"" )
+            out.append( "msgid \"\"" )
             # chunk string into 75 char lines
             s = ''
             for b in re.split(ur'(\s)', e):
@@ -216,5 +216,4 @@ if __name__ == '__main__':
         sys.exit('Usage: %s javascript-file' % sys.argv[0])
 
     print gettext( sys.argv[1] )
-
 
